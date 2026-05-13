@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQLi Challenge</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <style>
+        body { font-family: monospace; background: #fff; color: #000; text-align: center; margin-top: 50px; }
+        .box { border: 2px solid #000; padding: 20px; width: 480px; margin: 0 auto; text-align: left; }
+        .flag-box { border: 1px dashed #000; padding: 10px; margin-bottom: 20px; font-weight: bold; }
+        input[type="text"], input[type="password"] { border: 1px solid #000; padding: 8px; width: 90%; margin-bottom: 10px; font-family: monospace; outline: none; }
+        input[type="text"]:focus, input[type="password"]:focus { border-width: 2px; padding: 7px; }
+        button, .btn { background: #fff; border: 2px solid #000; padding: 8px 15px; cursor: pointer; text-decoration: none; color: #000; display: inline-block; font-family: monospace; font-weight: bold; margin-top: 5px; }
+        button:hover, .btn:hover { background: #000; color: #fff; }
+        .error { font-weight: bold; border-left: 4px solid #000; padding-left: 10px; margin-bottom: 15px; }
+        .hint { font-style: italic; margin-bottom: 15px; }
+        hr { border: 0; border-top: 1px dashed #000; margin: 25px 0; }
+        .skip-text { font-size: 0.9em; margin-left: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="box" id="app">
+        <h2>Loading Database Engine...</h2>
+    </div>
+
+    <script>
+        let db;
+        
+        initSqlJs({ locateFile: filename => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${filename}` }).then(function(SQL){
+            db = new SQL.Database();
+            db.run("CREATE TABLE users (username TEXT, password TEXT);");
+            db.run("INSERT INTO users VALUES ('admin', 'super_secret_pwn');");
+            renderLevel(1);
+        });
+
+        function renderLevel(level, errorMsg = '') {
+            const app = document.getElementById('app');
+            let html = '';
+
+            if (level === 1) {
+                html += `<h2>Level 1</h2>
+                <p class="hint">Actually, you don't always need to know the username and password.</p>
+                <p class="hint">[聽說這個網頁使用了SQLite程式庫]</p>`;
+            } 
+            else if (level === 2) {
+                html += `<div class="flag-box">Flag 1: gayCTF{ni_Hen_bang}</div>
+                <h2>Level 2</h2>
+                <p class="hint">Filter explanation: Spaces (' ') and equals signs ('=') are blocked.</p>`;
+            } 
+            else if (level === 3) {
+                html += `<div class="flag-box">Flag 2: gayCTF{ni_chao_bang}</div>
+                <h2>Level 3</h2>
+                <p class="hint">Filter explanation: The target username is restricted.</p>`;
+            } 
+            else if (level === 'success') {
+                html += `<h2>Congratulations!</h2>
+                <div class="flag-box">Flag 3: gayCTF{lao_tie_niu_bi}</div>
+                <p>You have successfully bypassed the Level 3 filter.</p>
+                <br>
+                <button onclick="
