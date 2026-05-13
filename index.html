@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SQLi Challenge</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-asm.js"></script>
     <style>
         body { font-family: monospace; background: #fff; color: #000; text-align: center; margin-top: 50px; }
         .box { border: 2px solid #000; padding: 20px; width: 480px; margin: 0 auto; text-align: left; }
@@ -28,7 +28,7 @@
     <script>
         let db;
         
-        initSqlJs({ locateFile: filename => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${filename}` }).then(function(SQL){
+        initSqlJs().then(function(SQL){
             db = new SQL.Database();
             db.run("CREATE TABLE users (username TEXT, password TEXT);");
             db.run("INSERT INTO users VALUES ('admin', 'super_secret_pwn');");
@@ -59,4 +59,81 @@
                 <div class="flag-box">Flag 3: gayCTF{lao_tie_niu_bi}</div>
                 <p>You have successfully bypassed the Level 3 filter.</p>
                 <br>
-                <button onclick="
+                <button onclick="renderLevel(4)" class="btn">Proceed to Level 4</button>`;
+                app.innerHTML = html;
+                return;
+            } 
+            else if (level === 4) {
+                html += `<h2>Level 4</h2>
+                <p>Welcome to Level 4. The challenge continues...</p>
+                <p class="hint">[Under Construction]</p>`;
+                app.innerHTML = html;
+                return;
+            }
+
+            if (errorMsg) {
+                html += `<p class="error">${errorMsg}</p>`;
+            }
+
+            html += `<form onsubmit="handleLogin(event, ${level})">
+                <label>Username:</label><br>
+                <input type="text" id="user" autocomplete="off"><br>
+                <label>Password:</label><br>
+                <input type="password" id="pass" autocomplete="off"><br>
+                <button type="submit">Login</button>
+            </form>`;
+
+            if (level === 3) {
+                html += `<hr>
+                <button onclick="renderLevel(4)" class="btn">Skip</button>
+                <span class="skip-text">You can skip this level, but you'll miss a flag.</span>`;
+            }
+
+            app.innerHTML = html;
+        }
+
+        function handleLogin(e, level) {
+            e.preventDefault();
+            const user = document.getElementById('user').value;
+            const pass = document.getElementById('pass').value;
+
+            if (level === 2) {
+                if (user.includes(' ') || pass.includes(' ') || user.includes('=') || pass.includes('=')) {
+                    renderLevel(2, 'Hacker detected! Filter blocked your request.');
+                    return;
+                }
+            } 
+            else if (level === 3) {
+                if (user.toLowerCase().includes('admin') || pass.toLowerCase().includes('admin')) {
+                    renderLevel(3, 'Filter is active: "admin" is blocked!');
+                    return;
+                }
+            }
+
+            try {
+                const query = `SELECT * FROM users WHERE username='${user}' AND password='${pass}'`;
+                const res = db.exec(query);
+                let success = false;
+
+                if (res.length > 0 && res[0].values.length > 0) {
+                    if (level === 3) {
+                        if (res[0].values[0][0] === 'admin') success = true;
+                    } else {
+                        success = true;
+                    }
+                }
+
+                if (success) {
+                    if (level === 1) renderLevel(2);
+                    else if (level === 2) renderLevel(3);
+                    else if (level === 3) renderLevel('success');
+                } else {
+                    renderLevel(level, level === 3 ? 'Login Failed or not Admin.' : 'Login Failed.');
+                }
+            } catch(err) {
+                renderLevel(level, 'Login Failed. (SQL Syntax Error)');
+            }
+        }
+    </script>
+</body>
+</html>
