@@ -42,7 +42,7 @@
             if (level === 1) {
                 html += `<h2>Level 1</h2>
                 <p class="hint">Actually, you don't always need to know the username and password.</p>
-                <p class="hint">[聽說這個網頁使用了SQLite程式庫]</p>`;
+                <p class="hint">[Rumor has it that this webpage uses the SQLite library.]</p>`;
             } 
             else if (level === 2) {
                 html += `<div class="flag-box">Flag 1: gayCTF{ni_Hen_bang}</div>
@@ -52,7 +52,7 @@
             else if (level === 3) {
                 html += `<div class="flag-box">Flag 2: gayCTF{ni_chao_bang}</div>
                 <h2>Level 3</h2>
-                <p class="hint">Filter explanation: The target username is restricted.</p>`;
+                <p class="hint">Filter explanation: The keyword "admin", and all "-" and "=" characters are completely blocked.</p>`;
             } 
             else if (level === 'success') {
                 html += `<h2>Congratulations!</h2>
@@ -106,6 +106,14 @@
             else if (level === 3) {
                 if (user.toLowerCase().includes('admin') || pass.toLowerCase().includes('admin')) {
                     renderLevel(3, 'Filter is active: "admin" is blocked!');
+                    return;
+                }
+                if (user.includes('-') || pass.includes('-')) {
+                    renderLevel(3, 'Filter is active: "-" is blocked!');
+                    return;
+                }
+                if (user.includes('=') || pass.includes('=')) {
+                    renderLevel(3, 'Filter is active: "=" is blocked!');
                     return;
                 }
             }
