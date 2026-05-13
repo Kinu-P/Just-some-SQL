@@ -13,7 +13,8 @@
         input[type="text"]:focus, input[type="password"]:focus { border-width: 2px; padding: 7px; }
         button, .btn { background: #fff; border: 2px solid #000; padding: 8px 15px; cursor: pointer; text-decoration: none; color: #000; display: inline-block; font-family: monospace; font-weight: bold; margin-top: 5px; }
         button:hover, .btn:hover { background: #000; color: #fff; }
-        .error { font-weight: bold; border-left: 4px solid #000; padding-left: 10px; margin-bottom: 15px; }
+        .error { font-weight: bold; border-left: 4px solid #000; padding-left: 10px; margin-bottom: 10px; }
+        .query-box { border: 1px dotted #000; padding: 8px; margin-bottom: 15px; font-size: 0.85em; word-break: break-all; }
         .hint { font-style: italic; margin-bottom: 15px; }
         hr { border: 0; border-top: 1px dashed #000; margin: 25px 0; }
         .skip-text { font-size: 0.9em; margin-left: 10px; }
@@ -45,7 +46,7 @@
             }
         });
 
-        function renderLevel(level, errorMsg = '') {
+        function renderLevel(level, errorMsg = '', queryStr = '') {
             localStorage.setItem('sqli_level', level);
             const app = document.getElementById('app');
             let html = '';
@@ -73,7 +74,7 @@
             else if (level === 3) {
                 html += `<div class="flag-box">Flag 2: gayCTF{ni_chao_bang}</div>
                 <h2>Level 3</h2>
-                <p class="hint">Filter explanation: The keyword "admin", and all "-" and "=" characters are completely blocked.</p>`;
+                <p class="hint">Filter explanation: The keywords "admin" and "or", and all "-" and "=" characters are completely blocked.</p>`;
             } 
             else if (level === 'success') {
                 html += `<h2>Congratulations!</h2>
@@ -94,6 +95,10 @@
 
             if (errorMsg) {
                 html += `<p class="error">${errorMsg}</p>`;
+                if (queryStr) {
+                    const safeQuery = queryStr.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    html += `<div class="query-box">Executed Query:<br><br><code>${safeQuery}</code></div>`;
+                }
             }
 
             html += `<form onsubmit="handleLogin(event, ${level})">
@@ -117,31 +122,35 @@
             e.preventDefault();
             const user = document.getElementById('user').value;
             const pass = document.getElementById('pass').value;
+            const queryStr = `SELECT * FROM users WHERE username='${user}' AND password='${pass}'`;
 
             if (level === 2) {
                 if (user.includes(' ') || pass.includes(' ') || user.includes('=') || pass.includes('=')) {
-                    renderLevel(2, 'Hacker detected! Filter blocked your request.');
+                    renderLevel(2, 'Hacker detected! Filter blocked your request.', queryStr);
                     return;
                 }
             } 
             else if (level === 3) {
                 if (user.toLowerCase().includes('admin') || pass.toLowerCase().includes('admin')) {
-                    renderLevel(3, 'Filter is active: "admin" is blocked!');
+                    renderLevel(3, 'Filter is active: "admin" is blocked!', queryStr);
+                    return;
+                }
+                if (user.toLowerCase().includes('or') || pass.toLowerCase().includes('or')) {
+                    renderLevel(3, 'Filter is active: "or" is blocked!', queryStr);
                     return;
                 }
                 if (user.includes('-') || pass.includes('-')) {
-                    renderLevel(3, 'Filter is active: "-" is blocked!');
+                    renderLevel(3, 'Filter is active: "-" is blocked!', queryStr);
                     return;
                 }
                 if (user.includes('=') || pass.includes('=')) {
-                    renderLevel(3, 'Filter is active: "=" is blocked!');
+                    renderLevel(3, 'Filter is active: "=" is blocked!', queryStr);
                     return;
                 }
             }
 
             try {
-                const query = `SELECT * FROM users WHERE username='${user}' AND password='${pass}'`;
-                const res = db.exec(query);
+                const res = db.exec(queryStr);
                 let success = false;
 
                 if (res.length > 0 && res[0].values.length > 0) {
@@ -157,10 +166,10 @@
                     else if (level === 2) renderLevel(3);
                     else if (level === 3) renderLevel('success');
                 } else {
-                    renderLevel(level, level === 3 ? 'Login Failed or not Admin.' : 'Login Failed.');
+                    renderLevel(level, level === 3 ? 'Login Failed or not Admin.' : 'Login Failed.', queryStr);
                 }
             } catch(err) {
-                renderLevel(level, 'Login Failed. (SQL Syntax Error)');
+                renderLevel(level, 'Login Failed. (SQL Syntax Error)', queryStr);
             }
         }
     </script>
